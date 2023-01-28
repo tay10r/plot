@@ -12,6 +12,7 @@ install:
 - vcpkg install glfw3:x64-windows
 - vcpkg install mlpack:x64-windows
 - vcpkg install freetype:x64-windows
+- vcpkg install gtest:x64-windows
 
 cache:
 - C:\tools\vcpkg\installed

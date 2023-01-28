@@ -7,10 +7,20 @@ option(PLOT_NO_COMPILER_WARNINGS OFF "Disables compiler warnings.")
 find_package(glfw3 REQUIRED)
 find_package(Freetype REQUIRED)
 find_package(OpenMP REQUIRED COMPONENTS CXX)
+find_package(GTest REQUIRED)
 
-if(NOT WIN32)
+if(WIN32)
+  find_path(MLPACK_INCLUDE_DIRS "mlpack/mlpack.hpp")
+
+  add_library(plot_mlpack INTERFACE)
+
+  target_include_directories(plot_mlpack INTERFACE "${MLPACK_INCLUDE_DIRS}")
+
+  add_library(mlpack::mlpack ALIAS plot_mlpack)
+
+else(WIN32)
   find_package(mlpack REQUIRED)
-endif(NOT WIN32)
+endif(WIN32)
 
 #==============#
 # Dependencies #
@@ -29,14 +39,48 @@ FetchContent_Declare(pfd
   URL_HASH "SHA256=9a0a0bcd9fd5190c1f24dd25b765d0c108ed657ed5ca9f1d5135e08fc5360632")
 FetchContent_MakeAvailable(pfd)
 
+#=================#
+# Support Library #
+#=================#
+
+add_library(plotlib
+  source/exception.hpp
+  source/exception.cpp
+  source/csv.hpp
+  source/csv.cpp
+  source/data_set.hpp
+  source/data_set.cpp)
+
+target_compile_definitions(plotlib PUBLIC _USE_MATH_DEFINES=1)
+
+target_compile_features(plotlib PUBLIC cxx_std_17)
+
+target_link_libraries(plotlib PUBLIC OpenMP::OpenMP_CXX mlpack::mlpack)
+
+if(MSVC)
+  target_compile_options(plotlib PUBLIC /Zc:__cplusplus)
+endif(MSVC)
+
+#=======#
+# Tests #
+#=======#
+
+add_executable(plot_tests
+  source/csv_tests.cpp
+  source/data_set_tests.cpp)
+
+target_link_libraries(plot_tests PRIVATE GTest::gtest GTest::gtest_main plotlib)
+
+target_compile_definitions(plot_tests PRIVATE "PROJECT_SOURCE_DIR=\"${PROJECT_SOURCE_DIR}\"")
+
 #=========#
 # Program #
 #=========#
 
 set(glad_sources
-  glad/src/glad.c
-  glad/include/glad/glad.h
-  glad/include/KHR/khrplatform.h)
+  source/glad/src/glad.c
+  source/glad/include/glad/glad.h
+  source/glad/include/KHR/khrplatform.h)
 
 set(imgui_sources
   "${imgui_SOURCE_DIR}/imgui.h"
@@ -57,14 +101,18 @@ set(imgui_sources
   "${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.h"
   "${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp")
 
-source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/glad" PREFIX glad FILES ${glad_sources})
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/source/glad" PREFIX glad FILES ${glad_sources})
 
 source_group(TREE ${imgui_SOURCE_DIR} PREFIX imgui FILES ${imgui_sources})
 
 add_executable(plot WIN32
-  main.cpp
-  application.hpp
-  application.cpp
+  source/main.cpp
+  source/application.hpp
+  source/application.cpp
+  source/menu_bar.hpp
+  source/menu_bar.cpp
+  source/file_dialog.hpp
+  source/file_dialog.cpp
   ${glad_sources}
   ${imgui_sources})
 
@@ -72,19 +120,9 @@ if(CMAKE_COMPILER_IS_GNUCXX AND NOT PLOT_NO_COMPILER_WARNINGS)
   target_compile_options(plot PRIVATE -Wall -Wextra -Werror -Wfatal-errors)
 endif(CMAKE_COMPILER_IS_GNUCXX AND NOT PLOT_NO_COMPILER_WARNINGS)
 
-if(MSVC)
-  target_compile_options(plot PRIVATE /Zc:__cplusplus)
-endif(MSVC)
-
 target_compile_features(plot PRIVATE cxx_std_17)
 
-target_link_libraries(plot PRIVATE glfw Freetype::Freetype OpenMP::OpenMP_CXX)
-
-if(WIN32)
-  target_include_directories(plot PRIVATE "${MLPACK_INCLUDE_DIRS}")
-elseif(WIN32)
-  target_link_libraries(plot PRIVATE mlpack::mlpack)
-endif(WIN32)
+target_link_libraries(plot PRIVATE glfw Freetype::Freetype portable_file_dialogs plotlib)
 
 target_compile_definitions(plot
   PRIVATE
@@ -95,7 +133,7 @@ target_compile_definitions(plot
 
 target_include_directories(plot
   PRIVATE
-    glad/include
+    source/glad/include
     "${imgui_SOURCE_DIR}"
     "${imgui_SOURCE_DIR}/misc/cpp"
     "${imgui_SOURCE_DIR}/misc/freetype"
