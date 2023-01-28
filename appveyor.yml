@@ -1,0 +1,24 @@
+image:
+  - Visual Studio 2022
+
+configuration:
+  - Release
+
+before_build:
+  - cmd: mkdir build-%CONFIGURATION%
+  - cmd: cmake . -B build-%CONFIGURATION%
+
+build:
+  project: build-%CONFIGURATION%\plot.sln
+  verbosity: minimal
+
+after_build:
+  - cmd: cd build-%CONFIGURATION% && cpack -G WIX -C %CONFIGURATION%
+
+cache:
+  - Debug-build\_deps
+  - Release-build\_deps
+
+artifacts:
+  - path: build-$(CONFIGURATION)\plot-0.1.0-win64.msi
+    name: $(CONFIGURATION)
