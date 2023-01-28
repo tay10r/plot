@@ -50,6 +50,19 @@ public:
   virtual ~data_set() = default;
 
   virtual void accept(data_set_visitor&) const = 0;
+
+  virtual const char* get_name() const = 0;
+};
+
+class img_data_set final : public data_set
+{
+public:
+  void accept(data_set_visitor& visitor) const override
+  {
+    visitor.visit(*this);
+  }
+
+  const char* get_name() const override { return ""; }
 };
 
 class csv_data_set final : public data_set
@@ -62,6 +75,8 @@ public:
     visitor.visit(*this);
   }
 
+  [[nodiscard]] const char* get_name() const override { return path_.c_str(); }
+
   [[nodiscard]] const char* get_column_name(const std::size_t index) const
   {
     return column_names_.at(index).c_str();
@@ -71,12 +86,19 @@ public:
 
   const arma::Mat<float>& get_data() const { return data_; }
 
-  const arma::Mat<int>& get_indices() const { return indices_; }
+  [[nodiscard]] bool has_x_column_index() const { return x_column_ != 0; }
+
+  /// Gets the index of the column to be used as the X axis.
+  [[nodiscard]] arma::uword get_x_column_index() const { return x_column_ - 1; }
 
 private:
+  std::string path_;
+
   std::vector<std::string> column_names_;
 
   arma::Mat<float> data_;
 
-  arma::Mat<int> indices_;
+  /// This is the 1-based index for indicating which column is used as the domain.
+  /// By default it is set to zero, which indicates that the row index should be used as the domain.
+  arma::uword x_column_{ 0 };
 };

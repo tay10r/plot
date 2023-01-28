@@ -34,6 +34,11 @@ FetchContent_Declare(imgui
 FetchContent_MakeAvailable(imgui)
 FetchContent_GetProperties(imgui)
 
+FetchContent_Declare(implot
+  URL "https://github.com/epezent/implot/archive/refs/tags/v0.14.zip")
+FetchContent_MakeAvailable(implot)
+FetchContent_GetProperties(implot)
+
 FetchContent_Declare(pfd
   URL "https://github.com/samhocevar/portable-file-dialogs/archive/5652fbd0df05f001aa2e92d86c22f762a03c1fd9.zip"
   URL_HASH "SHA256=9a0a0bcd9fd5190c1f24dd25b765d0c108ed657ed5ca9f1d5135e08fc5360632")
@@ -49,7 +54,9 @@ add_library(plotlib
   source/csv.hpp
   source/csv.cpp
   source/data_set.hpp
-  source/data_set.cpp)
+  source/data_set.cpp
+  source/session.hpp
+  source/session.cpp)
 
 target_compile_definitions(plotlib PUBLIC _USE_MATH_DEFINES=1)
 
@@ -67,11 +74,22 @@ endif(MSVC)
 
 add_executable(plot_tests
   source/csv_tests.cpp
-  source/data_set_tests.cpp)
+  source/data_set_tests.cpp
+  source/session_tests.cpp)
 
 target_link_libraries(plot_tests PRIVATE GTest::gtest GTest::gtest_main plotlib)
 
 target_compile_definitions(plot_tests PRIVATE "PROJECT_SOURCE_DIR=\"${PROJECT_SOURCE_DIR}\"")
+
+#=================#
+# Font Generation #
+#=================#
+
+add_executable(bin2comp
+  "${imgui_SOURCE_DIR}/misc/fonts/binary_to_compressed_c.cpp")
+
+add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/font.hpp"
+  COMMAND $<TARGET_FILE:bin2comp> "${imgui_SOURCE_DIR}/misc/fonts/Roboto-Medium.ttf" RobotoMedium ">${CMAKE_CURRENT_BINARY_DIR}/font.hpp")
 
 #=========#
 # Program #
@@ -101,7 +119,15 @@ set(imgui_sources
   "${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.h"
   "${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp")
 
+set(implot_sources
+  "${implot_SOURCE_DIR}/implot.h"
+  "${implot_SOURCE_DIR}/implot_internal.h"
+  "${implot_SOURCE_DIR}/implot.cpp"
+  "${implot_SOURCE_DIR}/implot_items.cpp")
+
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/source/glad" PREFIX glad FILES ${glad_sources})
+
+source_group(TREE ${implot_SOURCE_DIR} PREFIX implot FILES ${implot_sources})
 
 source_group(TREE ${imgui_SOURCE_DIR} PREFIX imgui FILES ${imgui_sources})
 
@@ -114,7 +140,9 @@ add_executable(plot WIN32
   source/file_dialog.hpp
   source/file_dialog.cpp
   ${glad_sources}
-  ${imgui_sources})
+  ${implot_sources}
+  ${imgui_sources}
+  "${CMAKE_CURRENT_BINARY_DIR}/font.hpp")
 
 if(CMAKE_COMPILER_IS_GNUCXX AND NOT PLOT_NO_COMPILER_WARNINGS)
   target_compile_options(plot PRIVATE -Wall -Wextra -Werror -Wfatal-errors)
@@ -133,7 +161,9 @@ target_compile_definitions(plot
 
 target_include_directories(plot
   PRIVATE
+    "${CMAKE_CURRENT_BINARY_DIR}"
     source/glad/include
+    "${implot_SOURCE_DIR}"
     "${imgui_SOURCE_DIR}"
     "${imgui_SOURCE_DIR}/misc/cpp"
     "${imgui_SOURCE_DIR}/misc/freetype"

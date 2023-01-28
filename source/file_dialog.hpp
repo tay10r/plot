@@ -7,7 +7,12 @@
 class file_dialog
 {
 public:
-  static std::unique_ptr<file_dialog> create_data_load_dialog();
+  using callback = void(*)(void* caller, const std::vector<std::string>& paths);
+
+  static std::unique_ptr<file_dialog> create_data_load_dialog(const char* title,
+                                                              const char* ext,
+                                                              void* caller,
+                                                              const callback cb);
 
   file_dialog() = default;
 
@@ -21,7 +26,5 @@ public:
 
   virtual ~file_dialog() = default;
 
-  virtual bool ready() const = 0;
-
-  virtual std::vector<std::string> results() = 0;
+  virtual bool poll() = 0;
 };

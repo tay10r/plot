@@ -33,11 +33,13 @@ struct column final
 
 struct file final
 {
+  std::string path;
+
   std::vector<column> columns;
 
   std::size_t row_count{ 0 };
 
-  void load(const char* path, char separator = ',');
+  void load(const char* path_parameter, char separator = ',');
 };
 
 } // namespace csv

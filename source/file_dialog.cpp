@@ -7,41 +7,44 @@ namespace {
 class data_load_dialog final : public file_dialog
 {
 public:
-  data_load_dialog()
+  data_load_dialog(const char* title, const char* ext, void* caller, const callback cb)
     : impl_("Load Data",
             "",
-            { "CSV Files",
-              "*.csv",
-              "TSV Files",
-              "*.tsv",
-              "PPM Images",
-              "*.ppm",
-              "PGM Images",
-              "*.pgm",
-              "HDF5 Files",
-              "*.hdf5" },
+            {
+              title,
+              ext,
+            },
             pfd::opt::multiselect)
+      , caller_(caller)
+      , callback_(cb)
   {
   }
 
-  [[nodiscard]] bool ready() const override
+  [[nodiscard]] bool poll() override
   {
-    return impl_.ready(0);
-  }
+    if (impl_.ready(0) && !done_) {
+      callback_(caller_, impl_.result());
+      done_ = true;
+      return true;
+    }
 
-  [[nodiscard]] std::vector<std::string> results() override
-  {
-    return impl_.result();
+    return false;
   }
 
 private:
   pfd::open_file impl_;
+
+  bool done_{ false };
+
+  void* caller_{ nullptr };
+
+  const callback callback_{ nullptr };
 };
 
 } // namespace
 
 std::unique_ptr<file_dialog>
-file_dialog::create_data_load_dialog()
+file_dialog::create_data_load_dialog(const char* title, const char* ext, void* caller, const callback cb)
 {
-  return std::make_unique<data_load_dialog>();
+  return std::make_unique<data_load_dialog>(title, ext, caller, cb);
 }

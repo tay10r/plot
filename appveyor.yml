@@ -9,10 +9,10 @@ install:
 - git pull
 - .\bootstrap-vcpkg.bat
 - cd %APPVEYOR_BUILD_FOLDER%
-- vcpkg install glfw3:x64-windows
-- vcpkg install mlpack:x64-windows
-- vcpkg install freetype:x64-windows
-- vcpkg install gtest:x64-windows
+- vcpkg install glfw3:x64-windows-static
+- vcpkg install mlpack:x64-windows-static
+- vcpkg install freetype:x64-windows-static
+- vcpkg install gtest:x64-windows-static
 
 cache:
 - C:\tools\vcpkg\installed

@@ -34,8 +34,10 @@ split(const std::string& line, const char separator)
 } // namespace
 
 void
-file::load(const char* path, const char separator)
+file::load(const char* path_parameter, const char separator)
 {
+  path = path_parameter;
+
   std::ifstream file(path);
 
   if (!file.good())

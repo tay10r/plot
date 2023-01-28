@@ -12,6 +12,8 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
+#include <implot.h>
+
 #include <cstdlib>
 
 #include "application.hpp"
@@ -37,9 +39,13 @@ run(GLFWwindow* window)
 
   ImGui::GetIO().IniFilename = nullptr;
 
+  auto* plot_context = ImPlot::CreateContext();
+
   auto app = application::create(window);
 
   const auto success{ app->run() };
+
+  ImPlot::DestroyContext(plot_context);
 
   ImGui_ImplOpenGL3_Shutdown();
 
