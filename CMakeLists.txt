@@ -2,8 +2,79 @@ cmake_minimum_required(VERSION 3.14.7)
 
 project(plot VERSION 0.1.0)
 
+option(PLOT_NO_COMPILER_WARNINGS OFF "Disables compiler warnings.")
+
+find_package(glfw3 REQUIRED)
+find_package(mlpack REQUIRED)
+find_package(Freetype REQUIRED)
+find_package(OpenMP REQUIRED COMPONENTS CXX)
+
+#==============#
+# Dependencies #
+#==============#
+
+include(FetchContent)
+
+FetchContent_Declare(imgui
+  URL "https://github.com/ocornut/imgui/archive/refs/tags/v1.89.2.zip"
+  URL_HASH "SHA256=ecb213f444da7f8512ad49e28c83c2b9fe952d4ee0fc34505f458e25f1cae53e")
+FetchContent_MakeAvailable(imgui)
+FetchContent_GetProperties(imgui)
+
+FetchContent_Declare(pfd
+  URL "https://github.com/samhocevar/portable-file-dialogs/archive/5652fbd0df05f001aa2e92d86c22f762a03c1fd9.zip"
+  URL_HASH "SHA256=9a0a0bcd9fd5190c1f24dd25b765d0c108ed657ed5ca9f1d5135e08fc5360632")
+FetchContent_MakeAvailable(pfd)
+
+#=========#
+# Program #
+#=========#
+
 add_executable(plot WIN32
-  main.cpp)
+  main.cpp
+  application.hpp
+  application.cpp
+  glad/src/glad.c
+  glad/include/glad/glad.h
+  glad/include/KHR/khrplatform.h
+  "${imgui_SOURCE_DIR}/imgui.h"
+  "${imgui_SOURCE_DIR}/imgui_internal.h"
+  "${imgui_SOURCE_DIR}/imstb_rectpack.h"
+  "${imgui_SOURCE_DIR}/imstb_textedit.h"
+  "${imgui_SOURCE_DIR}/imstb_truetype.h"
+  "${imgui_SOURCE_DIR}/imgui.cpp"
+  "${imgui_SOURCE_DIR}/imgui_draw.cpp"
+  "${imgui_SOURCE_DIR}/imgui_tables.cpp"
+  "${imgui_SOURCE_DIR}/imgui_widgets.cpp"
+  "${imgui_SOURCE_DIR}/misc/cpp/imgui_stdlib.h"
+  "${imgui_SOURCE_DIR}/misc/cpp/imgui_stdlib.cpp"
+  "${imgui_SOURCE_DIR}/misc/freetype/imgui_freetype.h"
+  "${imgui_SOURCE_DIR}/misc/freetype/imgui_freetype.cpp"
+  "${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.h"
+  "${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp"
+  "${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.h"
+  "${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp")
+
+if(CMAKE_COMPILER_IS_GNUCXX AND NOT PLOT_NO_COMPILER_WARNINGS)
+  target_compile_options(plot PRIVATE -Wall -Wextra -Werror -Wfatal-errors)
+endif(CMAKE_COMPILER_IS_GNUCXX AND NOT PLOT_NO_COMPILER_WARNINGS)
+
+target_link_libraries(plot PRIVATE glfw Freetype::Freetype mlpack::mlpack OpenMP::OpenMP_CXX)
+
+target_compile_definitions(plot
+  PRIVATE
+    GLFW_INCLUDE_NONE=1
+    IMGUI_IMPL_OPENGL_ES2=1
+    IMGUI_ENABLE_FREETYPE=1
+    ImDrawIdx=unsigned)
+
+target_include_directories(plot
+  PRIVATE
+    glad/include
+    "${imgui_SOURCE_DIR}"
+    "${imgui_SOURCE_DIR}/misc/cpp"
+    "${imgui_SOURCE_DIR}/misc/freetype"
+    "${imgui_SOURCE_DIR}/backends")
 
 if(COMMIT)
   target_compile_definitions(plot PRIVATE PLOT_COMMIT=${COMMIT})

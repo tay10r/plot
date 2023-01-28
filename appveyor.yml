@@ -4,9 +4,21 @@ image:
 configuration:
   - Release
 
+install:
+- cd C:\Tools\vcpkg
+- git pull
+- .\bootstrap-vcpkg.bat
+- cd %APPVEYOR_BUILD_FOLDER%
+- vcpkg install glfw3:x64-windows
+- vcpkg install mlpack:x64-windows
+- vcpkg install freetype:x64-windows
+
+cache:
+- C:\tools\vcpkg\installed\
+
 before_build:
   - cmd: mkdir build-%CONFIGURATION%
-  - cmd: cmake . -B build-%CONFIGURATION% -DCOMMIT=%APPVEYOR_REPO_COMMIT% -DTIMESTAMP=%APPVEYOR_REPO_COMMIT_TIMESTAMP%
+  - cmd: cmake . -B build-%CONFIGURATION% -DCOMMIT=%APPVEYOR_REPO_COMMIT% -DTIMESTAMP=%APPVEYOR_REPO_COMMIT_TIMESTAMP% -DCMAKE_TOOLCHAIN_FILE=C:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake
 
 build:
   project: build-%CONFIGURATION%\plot.sln
