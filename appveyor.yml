@@ -1,8 +1,8 @@
 image:
-  - Visual Studio 2022
+- Visual Studio 2022
 
 configuration:
-  - Release
+- Release
 
 install:
 - cd C:\Tools\vcpkg
@@ -14,23 +14,21 @@ install:
 - vcpkg install freetype:x64-windows
 
 cache:
-- C:\tools\vcpkg\installed\
+- C:\tools\vcpkg\installed
+- Debug-build\_deps
+- Release-build\_deps
 
 before_build:
-  - cmd: mkdir build-%CONFIGURATION%
-  - cmd: cmake . -B build-%CONFIGURATION% -DCOMMIT=%APPVEYOR_REPO_COMMIT% -DTIMESTAMP=%APPVEYOR_REPO_COMMIT_TIMESTAMP% -DCMAKE_TOOLCHAIN_FILE=C:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake
+- cmd: mkdir build-%CONFIGURATION%
+- cmd: cmake . -B build-%CONFIGURATION% -DCOMMIT=%APPVEYOR_REPO_COMMIT% -DTIMESTAMP=%APPVEYOR_REPO_COMMIT_TIMESTAMP% -DCMAKE_TOOLCHAIN_FILE=C:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake
 
 build:
   project: build-%CONFIGURATION%\plot.sln
   verbosity: minimal
 
 after_build:
-  - cmd: cd build-%CONFIGURATION% && cpack -G WIX -C %CONFIGURATION%
-
-cache:
-  - Debug-build\_deps
-  - Release-build\_deps
+- cmd: cd build-%CONFIGURATION% && cpack -G WIX -C %CONFIGURATION%
 
 artifacts:
-  - path: build-$(CONFIGURATION)\plot-0.1.0-win64.msi
-    name: $(CONFIGURATION)
+- path: build-$(CONFIGURATION)\plot-0.1.0-win64.msi
+  name: $(CONFIGURATION)
