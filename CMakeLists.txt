@@ -5,9 +5,12 @@ project(plot VERSION 0.1.0)
 option(PLOT_NO_COMPILER_WARNINGS OFF "Disables compiler warnings.")
 
 find_package(glfw3 REQUIRED)
-find_package(mlpack REQUIRED)
 find_package(Freetype REQUIRED)
 find_package(OpenMP REQUIRED COMPONENTS CXX)
+
+if(NOT WIN32)
+  find_package(mlpack REQUIRED)
+endif(NOT WIN32)
 
 #==============#
 # Dependencies #
@@ -30,13 +33,12 @@ FetchContent_MakeAvailable(pfd)
 # Program #
 #=========#
 
-add_executable(plot WIN32
-  main.cpp
-  application.hpp
-  application.cpp
+set(glad_sources
   glad/src/glad.c
   glad/include/glad/glad.h
-  glad/include/KHR/khrplatform.h
+  glad/include/KHR/khrplatform.h)
+
+set(imgui_sources
   "${imgui_SOURCE_DIR}/imgui.h"
   "${imgui_SOURCE_DIR}/imgui_internal.h"
   "${imgui_SOURCE_DIR}/imstb_rectpack.h"
@@ -55,11 +57,34 @@ add_executable(plot WIN32
   "${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.h"
   "${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp")
 
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/glad" PREFIX glad FILES ${glad_sources})
+
+source_group(TREE ${imgui_SOURCE_DIR} PREFIX imgui FILES ${imgui_sources})
+
+add_executable(plot WIN32
+  main.cpp
+  application.hpp
+  application.cpp
+  ${glad_sources}
+  ${imgui_sources})
+
 if(CMAKE_COMPILER_IS_GNUCXX AND NOT PLOT_NO_COMPILER_WARNINGS)
   target_compile_options(plot PRIVATE -Wall -Wextra -Werror -Wfatal-errors)
 endif(CMAKE_COMPILER_IS_GNUCXX AND NOT PLOT_NO_COMPILER_WARNINGS)
 
-target_link_libraries(plot PRIVATE glfw Freetype::Freetype mlpack::mlpack OpenMP::OpenMP_CXX)
+if(MSVC)
+  target_compile_options(plot PRIVATE /Zc:__cplusplus)
+endif(MSVC)
+
+target_compile_features(plot PRIVATE cxx_std_17)
+
+target_link_libraries(plot PRIVATE glfw Freetype::Freetype OpenMP::OpenMP_CXX)
+
+if(WIN32)
+  target_include_directories(plot PRIVATE "${MLPACK_INCLUDE_DIRS}")
+elseif(WIN32)
+  target_link_libraries(plot PRIVATE mlpack::mlpack)
+endif(WIN32)
 
 target_compile_definitions(plot
   PRIVATE
