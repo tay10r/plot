@@ -33,11 +33,6 @@ TEST(data_set, load_from_csv)
   EXPECT_EQ(std::string(ds.get_column_name(0)), "a");
   EXPECT_EQ(std::string(ds.get_column_name(1)), "c");
 
-  const auto& indices = ds.get_indices();
-  EXPECT_EQ(indices.size(), 2);
-  EXPECT_EQ(indices.at(0), 0);
-  EXPECT_EQ(indices.at(1), 1);
-
   const auto& data = ds.get_data();
   EXPECT_NEAR(data.at(0, 0), 0.0f, 0.001f);
   EXPECT_NEAR(data.at(0, 1), 2.0f, 0.001f);

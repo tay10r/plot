@@ -7,7 +7,7 @@ option(PLOT_NO_COMPILER_WARNINGS OFF "Disables compiler warnings.")
 find_package(glfw3 REQUIRED)
 find_package(Freetype REQUIRED)
 find_package(OpenMP REQUIRED COMPONENTS CXX)
-find_package(GTest REQUIRED)
+find_package(GTest REQUIRED CONFIG)
 
 if(WIN32)
   find_path(MLPACK_INCLUDE_DIRS "mlpack/mlpack.hpp")
