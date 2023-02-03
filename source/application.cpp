@@ -1,9 +1,9 @@
 #include "application.hpp"
 
-#include "menu_bar.hpp"
-#include "file_dialog.hpp"
 #include "csv.hpp"
 #include "data_set.hpp"
+#include "file_dialog.hpp"
+#include "menu_bar.hpp"
 #include "session.hpp"
 
 #include "font.hpp"
@@ -13,9 +13,9 @@
 #include <glad/glad.h>
 
 #include <imgui.h>
-#include <imgui_internal.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+#include <imgui_internal.h>
 
 #include <implot.h>
 
@@ -26,13 +26,13 @@ class load_job final
 public:
   using load_func = void (*)(void*);
 
-  using completion_callback = void(*)(void*, std::unique_ptr<data_set>);
+  using completion_callback = void (*)(void*, std::unique_ptr<data_set>);
 
   explicit load_job(std::string path, load_func f, void* caller, completion_callback completion_cb)
     : path_(std::move(path))
-      , thread_(f, this)
-      , caller_(caller)
-      , completion_callback_(completion_cb)
+    , thread_(f, this)
+    , caller_(caller)
+    , completion_callback_(completion_cb)
   {
   }
 
@@ -99,9 +99,7 @@ public:
     }
   }
 
-  void visit(const img_data_set&) override
-  {
-  }
+  void visit(const img_data_set&) override {}
 };
 
 class data_set_info_renderer final : public data_set_visitor
@@ -118,7 +116,6 @@ public:
         const char* column_name = ds.get_column_name(i);
 
         if (ImGui::CollapsingHeader(column_name)) {
-
         }
       }
 
@@ -134,10 +131,7 @@ public:
     }
   }
 
-  std::vector<std::unique_ptr<session::operation>> take_operations()
-  {
-    return std::move(operations_);
-  }
+  std::vector<std::unique_ptr<session::operation>> take_operations() { return std::move(operations_); }
 
 private:
   void render_close_button(const data_set* ds)
@@ -259,6 +253,8 @@ private:
 
   static void on_tsv_load(void* self_ptr, const std::vector<std::string>& paths)
   {
+    (void)self_ptr;
+    (void)paths;
   }
 
   void load_csv_data_file(const char* title, const char* extension, const file_dialog::callback callback)
@@ -329,10 +325,9 @@ private:
     ImGui::SetNextWindowPos(ImVec2(side_panel_offset + (margin * 1) + separation_margin, menu_size.y + margin),
                             ImGuiCond_Always);
 
-    ImGui::SetNextWindowSize(
-      ImVec2(max_size.x - (side_panel_offset + (margin * 2) + separation_margin),
-             max_size.y - menu_size.y - (margin * 2)),
-      ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(max_size.x - (side_panel_offset + (margin * 2) + separation_margin),
+                                    max_size.y - menu_size.y - (margin * 2)),
+                             ImGuiCond_Always);
 
     ImGui::Begin("Tabs Window", nullptr, ImGuiWindowFlags_NoDecoration);
 
@@ -340,7 +335,12 @@ private:
 
       if (ImGui::BeginTabItem("Visuals")) {
 
-        render_visuals();
+        if (ImGui::BeginChild("VisualsContent")) {
+
+          render_visuals();
+
+          ImGui::EndChild();
+        }
 
         ImGui::EndTabItem();
       }
@@ -369,7 +369,7 @@ private:
     const ImGuiID id = window->GetID(label);
 
     ImVec2 pos = window->DC.CursorPos;
-    ImVec2 size((radius) * 2, (radius + style.FramePadding.y) * 2);
+    ImVec2 size((radius)*2, (radius + style.FramePadding.y) * 2);
 
     const ImRect bb(pos, ImVec2(pos.x + size.x, pos.y + size.y));
     ImGui::ItemSize(bb, style.FramePadding.y);
@@ -411,7 +411,6 @@ private:
         auto cross_hairs{ true };
 
         if (ImGui::Checkbox("Crosshairs", &cross_hairs)) {
-
         }
 
         if (ImGui::Checkbox("Hide Mouse Text", &hide_mouse_text)) {
@@ -487,9 +486,7 @@ private:
   void rebuild_fonts()
   {
     font_ = ImGui::GetIO().Fonts->AddFontFromMemoryCompressedTTF(
-      RobotoMedium_compressed_data,
-      RobotoMedium_compressed_size,
-      menu_bar_.font_size());
+      RobotoMedium_compressed_data, RobotoMedium_compressed_size, menu_bar_.font_size());
 
     ImGui::GetIO().Fonts->Build();
 
