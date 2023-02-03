@@ -111,9 +111,18 @@ public:
   {
     if (ImGui::CollapsingHeader(ds.get_name())) {
 
-      if (ImGui::Button("Close")) {
+      const auto column_count = ds.get_column_count();
 
+      for (size_t i = 0; i < column_count; ++i) {
+
+        const char* column_name = ds.get_column_name(i);
+
+        if (ImGui::CollapsingHeader(column_name)) {
+
+        }
       }
+
+      render_close_button(&ds);
     }
   }
 
@@ -121,11 +130,30 @@ public:
   {
     if (ImGui::CollapsingHeader(ds.get_name())) {
 
-      if (ImGui::Button("Close")) {
-
-      }
+      render_close_button(&ds);
     }
   }
+
+  std::vector<std::unique_ptr<session::operation>> take_operations()
+  {
+    return std::move(operations_);
+  }
+
+private:
+  void render_close_button(const data_set* ds)
+  {
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.0, 0.0, 0.0, 1.0));
+
+    if (ImGui::Button("Close")) {
+
+      operations_.emplace_back(std::make_unique<session::close_data_set_operation>(ds));
+    }
+
+    ImGui::PopStyleColor(1);
+  }
+
+private:
+  std::vector<std::unique_ptr<session::operation>> operations_;
 };
 
 class application_impl final : public application
@@ -214,7 +242,7 @@ private:
   {
     auto* self{ static_cast<application_impl*>(self_ptr) };
 
-    self->session_.data_sets_.emplace_back(std::move(ds));
+    self->session_.add_data_set(std::move(ds));
   }
 
   static void on_csv_load_request(void* self_ptr, const std::vector<std::string>& paths)
@@ -249,11 +277,20 @@ private:
       case menu_bar::action::exit:
         glfwSetWindowShouldClose(window_, GLFW_TRUE);
         break;
+      case menu_bar::action::new_chart:
+        session_.new_chart();
+        break;
       case menu_bar::action::load_csv:
         load_csv_data_file("CSV Files", "*.csv", on_csv_load_request);
         break;
       case menu_bar::action::load_tsv:
         load_csv_data_file("TSV Files", "*.tsv", on_tsv_load);
+        break;
+      case menu_bar::action::undo:
+        session_.undo();
+        break;
+      case menu_bar::action::redo:
+        session_.redo();
         break;
       case menu_bar::action::change_font_size:
         font_rebuild_queued_ = true;
@@ -301,9 +338,9 @@ private:
 
     if (ImGui::BeginTabBar("Tabs")) {
 
-      if (ImGui::BeginTabItem("Charts")) {
+      if (ImGui::BeginTabItem("Visuals")) {
 
-        render_charts();
+        render_visuals();
 
         ImGui::EndTabItem();
       }
@@ -361,6 +398,28 @@ private:
     return true;
   }
 
+  void render_charts()
+  {
+    const auto* m = session_.get_model();
+
+    for (const auto& chart : m->charts) {
+
+      if (ImGui::CollapsingHeader(chart.second.name.c_str())) {
+
+        auto hide_mouse_text{ chart.second.hide_mouse_text };
+
+        auto cross_hairs{ true };
+
+        if (ImGui::Checkbox("Crosshairs", &cross_hairs)) {
+
+        }
+
+        if (ImGui::Checkbox("Hide Mouse Text", &hide_mouse_text)) {
+        }
+      }
+    }
+  }
+
   void render_side_panel()
   {
     if (ImGui::BeginTabBar("Side Panel Tabs")) {
@@ -368,8 +427,20 @@ private:
       if (ImGui::BeginTabItem("Datasets")) {
 
         data_set_info_renderer renderer;
-        for (const auto& ds : session_.data_sets_)
-          ds->accept(renderer);
+
+        session_.accept_data_set_visitor(renderer);
+
+        auto ops = renderer.take_operations();
+
+        for (auto& op : ops)
+          session_.apply_operation(*op);
+
+        ImGui::EndTabItem();
+      }
+
+      if (ImGui::BeginTabItem("Charts")) {
+
+        render_charts();
 
         ImGui::EndTabItem();
       }
@@ -396,14 +467,21 @@ private:
     }
   }
 
-  void render_charts()
+  void render_visuals() const
   {
+    const auto* m = session_.get_model();
+
+    for (const auto& c : m->charts) {
+
+      if (ImPlot::BeginPlot(c.second.name.c_str())) {
+
+        ImPlot::EndPlot();
+      }
+    }
+
     chart_renderer renderer;
 
-    for (const auto& ds : session_.data_sets_) {
-
-      ds->accept(renderer);
-    }
+    session_.accept_data_set_visitor(renderer);
   }
 
   void rebuild_fonts()

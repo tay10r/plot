@@ -1,6 +1,8 @@
 #pragma once
 
 #include "data_set.hpp"
+#include "logger.hpp"
+#include "model.hpp"
 
 class session final
 {
@@ -88,11 +90,44 @@ public:
   /// @return True if the data set was found and closed, false otherwise.
   bool close_data_set(const data_set* ds);
 
-  const data_set* get_data_set(const std::size_t index) const
+  [[nodiscard]] const data_set* get_data_set(const std::size_t index) const
   {
     return data_sets_.at(index).get();
   }
 
+  void add_logger_sink(logger::sink* s);
+
+  [[nodiscard]] logger* get_logger();
+
+  /// Gets a read-only pointer to the current model.
+  ///
+  /// @return A pointer to the current model.
+  [[nodiscard]] const model* get_model() const;
+
+  /// Creates a new chart.
+  void new_chart();
+
+  /// Used to edit the model.
+  ///
+  /// Will make a new copy of the model and modify the edit history buffer.
+  ///
+  /// @return A pointer to the model to edit.
+  model* edit_model();
+
+  /// If possible, go back into the model history before a change was made.
+  void undo();
+
+  /// If possible, re-apply a previously reverted model change.
+  void redo();
+
 private:
+  /// The edit history for the project model.
+  std::vector<model> model_history_{ model() };
+
+  /// The index of the current model.
+  std::size_t model_index_{ 0 };
+
   std::vector<std::unique_ptr<data_set>> data_sets_;
+
+  logger logger_;
 };

@@ -8,17 +8,15 @@ find_package(glfw3 REQUIRED)
 find_package(Freetype REQUIRED)
 find_package(OpenMP REQUIRED COMPONENTS CXX)
 find_package(GTest REQUIRED CONFIG)
+find_package(yaml-cpp REQUIRED CONFIG)
 
 if(WIN32)
   find_path(MLPACK_INCLUDE_DIRS "mlpack/mlpack.hpp")
-
   add_library(plot_mlpack INTERFACE)
-
   target_include_directories(plot_mlpack INTERFACE "${MLPACK_INCLUDE_DIRS}")
-
   add_library(mlpack::mlpack ALIAS plot_mlpack)
-
 else(WIN32)
+  # Use apt-get
   find_package(mlpack REQUIRED)
 endif(WIN32)
 
@@ -39,6 +37,13 @@ FetchContent_Declare(implot
 FetchContent_MakeAvailable(implot)
 FetchContent_GetProperties(implot)
 
+FetchContent_Declare(imnodes
+  URL "https://github.com/Nelarius/imnodes/archive/d88f99125bb72cdb71b4c27ff6eb7f318d89a4c5.zip")
+FetchContent_GetProperties(imnodes)
+if(NOT ${imnodes_POPULATED})
+  FetchContent_Populate(imnodes)
+endif(NOT ${imnodes_POPULATED})
+
 FetchContent_Declare(pfd
   URL "https://github.com/samhocevar/portable-file-dialogs/archive/5652fbd0df05f001aa2e92d86c22f762a03c1fd9.zip"
   URL_HASH "SHA256=9a0a0bcd9fd5190c1f24dd25b765d0c108ed657ed5ca9f1d5135e08fc5360632")
@@ -56,7 +61,11 @@ add_library(plotlib
   source/data_set.hpp
   source/data_set.cpp
   source/session.hpp
-  source/session.cpp)
+  source/session.cpp
+  source/model.hpp
+  source/model.cpp
+  source/logger.hpp
+  source/logger.cpp)
 
 target_compile_definitions(plotlib PUBLIC _USE_MATH_DEFINES=1)
 
@@ -73,6 +82,7 @@ endif(MSVC)
 #=======#
 
 add_executable(plot_tests
+  source/model_tests.cpp
   source/csv_tests.cpp
   source/data_set_tests.cpp
   source/session_tests.cpp)

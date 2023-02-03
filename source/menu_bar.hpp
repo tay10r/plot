@@ -8,8 +8,11 @@ public:
   enum class action
   {
     none,
+    new_chart,
     load_csv,
     load_tsv,
+    undo,
+    redo,
     change_font_size,
     exit
   };

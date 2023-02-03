@@ -12,6 +12,11 @@ menu_bar::render()
 
   if (ImGui::BeginMenu("File")) {
 
+    if (ImGui::MenuItem("New Chart"))
+      action = menu_bar::action::new_chart;
+
+    ImGui::Separator();
+
     if (ImGui::MenuItem("Load CSV"))
       action = menu_bar::action::load_csv;
 
@@ -22,6 +27,17 @@ menu_bar::render()
 
     if (ImGui::MenuItem("Exit"))
       action = menu_bar::action::exit;
+
+    ImGui::EndMenu();
+  }
+
+  if (ImGui::BeginMenu("Edit")) {
+
+    if (ImGui::MenuItem("Undo"))
+      action = menu_bar::action::undo;
+
+    if (ImGui::MenuItem("Redo"))
+      action = menu_bar::action::redo;
 
     ImGui::EndMenu();
   }
